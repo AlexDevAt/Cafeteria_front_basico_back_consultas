@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pruebas API Cafetería</title>
+
+  <style>
+    :root{
+      --border:#e5e7eb; --muted:#6b7280; --bg:#f9fafb; --card:#ffffff;
+      --ok:#16a34a; --bad:#dc2626; --ink:#111827;
+    }
+    body{ font-family: Arial, sans-serif; max-width: 1100px; margin: 28px auto; padding: 0 12px; color: var(--ink); background: #fff; }
+    h1{ text-align:center; margin: 10px 0 16px; }
+    .bar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:12px; border:1px solid var(--border); border-radius:12px; background: var(--bg); }
+    input{ padding:8px 10px; width: 360px; max-width: 100%; border:1px solid var(--border); border-radius:10px; }
+    .btn{ padding:10px 12px; border:1px solid var(--border); background:#fff; border-radius:10px; cursor:pointer; }
+    .btn:hover{ background:#f3f4f6; }
+    .sections{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
+    @media(max-width:900px){ .sections{ grid-template-columns: 1fr; } }
+    .panel{ padding:12px; border:1px solid var(--border); border-radius:12px; background: #fff; }
+    .panel h3{ margin: 0 0 10px; }
+    .gridBtns{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media(max-width:700px){ .gridBtns{ grid-template-columns: 1fr; } }
+
+    .status{ margin-top: 12px; padding: 10px 12px; border-radius: 12px; border:1px solid var(--border); background: var(--bg); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .status .muted{ color: var(--muted); }
+    .pill{ font-size: 12px; padding: 4px 10px; border-radius: 999px; border:1px solid var(--border); background:#fff; }
+    .pill.ok{ border-color: #bbf7d0; background:#ecfdf5; color: var(--ok); }
+    .pill.bad{ border-color: #fecaca; background:#fef2f2; color: var(--bad); }
+
+    .results{ margin-top:12px; padding:12px; border:1px solid var(--border); border-radius:12px; background: var(--card); }
+    .resultsHeader{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:baseline; }
+    .resultsHeader h2{ margin:0; font-size: 18px; }
+    .resultsHeader .muted{ color: var(--muted); font-size: 13px; }
+
+    table{ width:100%; border-collapse: collapse; margin-top:10px; overflow:hidden; border-radius:10px; }
+    th, td{ border-bottom:1px solid var(--border); padding:10px; text-align:left; vertical-align: top; }
+    th{ background: var(--bg); font-weight: 700; }
+    tr:hover td{ background:#fafafa; }
+    .empty{ color: var(--muted); padding: 12px 0; }
+    .cards{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px; }
+    @media(max-width:900px){ .cards{ grid-template-columns: 1fr; } }
+    .card{ border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff; }
+    .cardTitle{ font-weight:700; margin-bottom:6px; }
+    .kv{ display:grid; grid-template-columns: 160px 1fr; gap:6px 10px; }
+    .k{ color: var(--muted); }
+    .v{ word-break: break-word; }
+  </style>
+</head>
+
+<body>
+  <h1>Pruebas API Cafetería</h1>
+
+  <div class="bar">
+    <label><b>API URL:</b></label>
+    <input id="baseUrl" value="http://127.0.0.1:8000" />
+    <button class="btn" onclick="clearResults()">Limpiar resultados</button>
+  </div>
+
+  <div class="sections">
+    <div class="panel">
+      <h3>Consultas avanzadas</h3>
+      <div class="gridBtns">
+        <button class="btn" onclick="callApi('Pedidos con alumno (JOIN)', '/cafeteria/avanzadas/pedidos-con-alumno')">Pedidos con alumno</button>
+        <button class="btn" onclick="callApi('Productos vendidos por pedido (JOIN)', '/cafeteria/avanzadas/productos-vendidos-por-pedido')">Productos vendidos</button>
+        <button class="btn" onclick="callApi('Productos > promedio (Subconsulta)', '/cafeteria/avanzadas/productos-mayor-al-promedio')">Productos &gt; promedio</button>
+        <button class="btn" onclick="callApi('Alumnos con pedidos (IN)', '/cafeteria/avanzadas/alumnos-con-pedidos')">Alumnos con pedidos</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Agregados</h3>
+      <div class="gridBtns">
+        <button class="btn" onclick="callApi('COUNT pedidos', '/cafeteria/agregados/count-pedidos')">COUNT pedidos</button>
+        <button class="btn" onclick="callApi('SUM total ingresos', '/cafeteria/agregados/sum-total-ingresos')">SUM ingresos</button>
+        <button class="btn" onclick="callApi('AVG / MAX / MIN productos', '/cafeteria/agregados/stats-precios-producto')">Stats precios</button>
+        <button class="btn" onclick="callApi('GROUP BY compras por alumno', '/cafeteria/agregados/compras-por-alumno')">Compras por alumno</button>
+        <button class="btn" onclick="callApi('HAVING alumnos > 1 pedido', '/cafeteria/agregados/alumnos-con-mas-de-un-pedido')">Alumnos &gt; 1 pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status">
+    <div>
+      <b>Estado:</b> <span id="statusText" class="muted">Listo.</span>
+    </div>
+    <div id="statusPill" class="pill">—</div>
+  </div>
+
+  <div class="results">
+    <div class="resultsHeader">
+      <h2 id="resultTitle">Resultados</h2>
+      <div id="resultMeta" class="muted">Presiona un botón para consultar.</div>
+    </div>
+    <div id="resultBody" class="empty">Sin resultados todavía.</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
